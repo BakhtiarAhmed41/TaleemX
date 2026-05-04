@@ -74,7 +74,7 @@
         font-size: var(--ss-font-size-sm);
         font-weight: var(--ss-font-weight-medium);
         color: #fff;
-        background: linear-gradient(135deg, var(--ss-color-brown, #442F24), #2a1a13);
+        background: linear-gradient(135deg, var(--ss-color-brown, #442F24), #442F24);
         border: 1px solid var(--ss-color-brown, #442F24);
         border-radius: var(--ss-radius-md);
         cursor: pointer;
@@ -212,7 +212,7 @@
         border-radius: 50%;
         display: grid; place-items: center;
         color: #fff;
-        background: linear-gradient(135deg, var(--ss-color-brown, #442F24), #2a1a13);
+        background: linear-gradient(135deg, var(--ss-color-brown, #442F24), #442F24);
         box-shadow: 0 4px 12px rgba(var(--ss-color-brown-rgb, 68, 47, 36), 0.40);
         font-size: 16px;
     }
@@ -275,7 +275,7 @@
         font-weight: var(--ss-font-weight-semibold);
     }
     .askai-msg--ai .askai-msg__avatar {
-        background: linear-gradient(135deg, var(--ss-color-brown, #442F24), #2a1a13);
+        background: linear-gradient(135deg, var(--ss-color-brown, #442F24), #442F24);
     }
     .askai-msg--user .askai-msg__avatar {
         background: var(--ss-color-neutral-400);
@@ -396,7 +396,7 @@
         border-radius: 50%;
         display: grid; place-items: center;
         color: #fff;
-        background: linear-gradient(135deg, var(--ss-color-brown, #442F24), #2a1a13);
+        background: linear-gradient(135deg, var(--ss-color-brown, #442F24), #442F24);
         font-size: 26px;
         box-shadow: 0 10px 30px rgba(var(--ss-color-brown-rgb, 68, 47, 36), 0.40);
     }

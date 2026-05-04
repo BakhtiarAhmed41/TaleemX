@@ -1,0 +1,9 @@
+*.md
+*.zip
+*.sql
+
+# Firebase service account key (FCM). Tenants should upload their own JSON
+# via System Settings -> Push Notification, which is stored in the database.
+# This rule prevents accidentally committing a real key from local installs.
+application/third_party/firebase_notification_key.json
+api/application/third_party/firebase_notification_key.json
