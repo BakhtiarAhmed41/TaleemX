@@ -1338,6 +1338,7 @@ $lang['nexmo_api_secret'] = "Nexmo Api Secret";
 $lang['nexmo_registered_phone_number'] = "Nexmo Registered Phone Number";	
 $lang['next'] = "Next";	
 $lang['next_follow_up_date'] = "Next Follow Up Date";	
+$lang['next_follow_up_before_enquiry_date'] = "Next follow up date cannot be earlier than the enquiry date, this follow-up date, or the last recorded follow-up date.";
 $lang['next_session_status'] = "Next Session Status";	
 $lang['no'] = "No";	
 $lang['no_attendance_prepared'] = "No Attendance Prepared";	

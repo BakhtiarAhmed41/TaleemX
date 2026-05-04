@@ -70,10 +70,10 @@ class Enquiry extends Admin_Controller
             access_denied();
         }
         $this->form_validation->set_rules('name', $this->lang->line('name'), 'trim|required|xss_clean');
-        $this->form_validation->set_rules('contact', $this->lang->line('phone'), 'trim|required|xss_clean');
+        $this->form_validation->set_rules('contact', $this->lang->line('phone'), 'trim|required|xss_clean|saudi_phone');
         $this->form_validation->set_rules('source', $this->lang->line('source'), 'trim|required|xss_clean');
         $this->form_validation->set_rules('date', $this->lang->line('date'), 'trim|required|xss_clean');
-        $this->form_validation->set_rules('follow_up_date', $this->lang->line('next_follow_up_date'), 'trim|required|xss_clean');
+        $this->form_validation->set_rules('follow_up_date', $this->lang->line('next_follow_up_date'), 'trim|required|xss_clean|callback_follow_up_not_before_posted_enquiry_date');
         
         if ($this->form_validation->run() == false) {
             $msg = array(
@@ -86,6 +86,8 @@ class Enquiry extends Admin_Controller
 
             $array = array('status' => 'fail', 'error' => $msg, 'message' => '');
         } else {
+
+            saudi_phone_normalize_post_fields(array('contact'));
 
             $userdata   = $this->customlib->getUserData();
             $created_by = $userdata["id"];
@@ -161,7 +163,7 @@ class Enquiry extends Admin_Controller
 
         $this->form_validation->set_rules('response', $this->lang->line('response'), 'trim|required|xss_clean');
         $this->form_validation->set_rules('date', $this->lang->line('follow_up_date'), 'trim|required|xss_clean');
-        $this->form_validation->set_rules('follow_up_date', $this->lang->line('next_follow_up_date'), 'trim|required|xss_clean');
+        $this->form_validation->set_rules('follow_up_date', $this->lang->line('next_follow_up_date'), 'trim|required|xss_clean|callback_follow_up_not_before_saved_enquiry_date');
         if ($this->form_validation->run() == false) {
             $msg = array(
                 'response'       => form_error('response'),
@@ -215,10 +217,10 @@ class Enquiry extends Admin_Controller
             access_denied();
         }
         $this->form_validation->set_rules('name', $this->lang->line('name'), 'trim|required|xss_clean');
-        $this->form_validation->set_rules('contact', $this->lang->line('phone'), 'trim|required|xss_clean');
+        $this->form_validation->set_rules('contact', $this->lang->line('phone'), 'trim|required|xss_clean|saudi_phone');
         $this->form_validation->set_rules('source', $this->lang->line('source'), 'trim|required|xss_clean');
         $this->form_validation->set_rules('date', $this->lang->line('date'), 'trim|required|xss_clean');
-        $this->form_validation->set_rules('follow_up_date', $this->lang->line('next_follow_up_date'), 'trim|required|xss_clean');
+        $this->form_validation->set_rules('follow_up_date', $this->lang->line('next_follow_up_date'), 'trim|required|xss_clean|callback_follow_up_not_before_posted_enquiry_date');
         
         if ($this->form_validation->run() == false) {
             $msg = array(
@@ -231,6 +233,9 @@ class Enquiry extends Admin_Controller
 
             $array = array('status' => 'fail', 'error' => $msg, 'message' => '');
         } else {
+
+            saudi_phone_normalize_post_fields(array('contact'));
+
             $enquiry_update = array(
                 'name'           => $this->input->post('name'),
                 'contact'        => $this->input->post('contact'),
@@ -293,6 +298,86 @@ class Enquiry extends Admin_Controller
             $array = array('status' => 'fail', 'error' => '', 'message' => '');
         }
         echo json_encode($array);
+    }
+
+    /**
+     * Next follow up must be on or after the enquiry date on the form; on edit, also not before the latest follow-up row date.
+     */
+    public function follow_up_not_before_posted_enquiry_date($follow_up_date_raw)
+    {
+        if ($follow_up_date_raw === null || $follow_up_date_raw === '') {
+            return true;
+        }
+        $enquiry_date = $this->input->post('date');
+        if ($enquiry_date === null || $enquiry_date === '') {
+            return true;
+        }
+        $floor_ts = strtotime(date('Y-m-d', $this->customlib->datetostrtotime($enquiry_date)));
+        if ($this->router->fetch_method() === 'editpost') {
+            $enquiry_edit_id = (int) $this->input->post('enquiry_row_id');
+            if ($enquiry_edit_id <= 0) {
+                $enquiry_edit_id = (int) $this->uri->segment(4);
+            }
+            if ($enquiry_edit_id > 0) {
+                $last = $this->enquiry_model->getFollowByEnquiry($enquiry_edit_id);
+                if (!empty($last['date']) && $last['date'] !== '0000-00-00') {
+                    $last_ts = strtotime(date('Y-m-d', strtotime($last['date'])));
+                    if ($last_ts > $floor_ts) {
+                        $floor_ts = $last_ts;
+                    }
+                }
+            }
+        }
+        $next_ts = strtotime(date('Y-m-d', $this->customlib->datetostrtotime($follow_up_date_raw)));
+        if ($next_ts < $floor_ts) {
+            $this->form_validation->set_message('follow_up_not_before_posted_enquiry_date', $this->lang->line('next_follow_up_before_enquiry_date'));
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Follow-up modal: next date must be on or after enquiry registration, this visit's follow-up date (POST date),
+     * and the latest existing follow-up row date (same source as "Last follow up date" in the UI).
+     */
+    public function follow_up_not_before_saved_enquiry_date($follow_up_date_raw)
+    {
+        if ($follow_up_date_raw === null || $follow_up_date_raw === '') {
+            return true;
+        }
+        $enquiry_id = $this->input->post('enquiry_id');
+        $status      = $this->input->post('enquiry_status');
+        if (empty($enquiry_id) || $status === null || $status === '') {
+            return true;
+        }
+        $floor_ts = null;
+        $enquiry  = $this->enquiry_model->getenquiry_list($enquiry_id, $status);
+        if (!empty($enquiry['date']) && $enquiry['date'] !== '0000-00-00') {
+            $floor_ts = strtotime(date('Y-m-d', strtotime($enquiry['date'])));
+        }
+        $session_follow = $this->input->post('date');
+        if ($session_follow !== null && $session_follow !== '') {
+            $sess_ts = strtotime(date('Y-m-d', $this->customlib->datetostrtotime($session_follow)));
+            if ($floor_ts === null || $sess_ts > $floor_ts) {
+                $floor_ts = $sess_ts;
+            }
+        }
+        $last = $this->enquiry_model->getFollowByEnquiry($enquiry_id);
+        if (!empty($last['date']) && $last['date'] !== '0000-00-00') {
+            $last_ts = strtotime(date('Y-m-d', strtotime($last['date'])));
+            if ($floor_ts === null || $last_ts > $floor_ts) {
+                $floor_ts = $last_ts;
+            }
+        }
+        if ($floor_ts === null) {
+            return true;
+        }
+        $next_ts = strtotime(date('Y-m-d', $this->customlib->datetostrtotime($follow_up_date_raw)));
+        if ($next_ts < $floor_ts) {
+            $this->form_validation->set_message('follow_up_not_before_saved_enquiry_date', $this->lang->line('next_follow_up_before_enquiry_date'));
+            return false;
+        }
+        return true;
     }
 
 }

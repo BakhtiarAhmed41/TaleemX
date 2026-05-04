@@ -221,7 +221,7 @@ class Resume extends Admin_Controller
                 $this->form_validation->set_rules('relation_'.$row_value,$this->lang->line('relation'),'trim|required');       
                 $this->form_validation->set_rules('reference_age_'.$row_value,$this->lang->line('age'),'trim|required');       
                 $this->form_validation->set_rules('profession_'.$row_value,$this->lang->line('profession'),'trim|required');       
-                $this->form_validation->set_rules('contact_'.$row_value,$this->lang->line('contact'),'trim|required');       
+                $this->form_validation->set_rules('contact_'.$row_value,$this->lang->line('contact'),'trim|required|xss_clean|saudi_phone');       
 
                 if ($this->form_validation->run() == false) {           
                     $msg = array(
@@ -241,6 +241,11 @@ class Resume extends Admin_Controller
 
         // save the multiple data 
 		$student_id   = $this->input->post('student_id');
+        if (isset($total_rows) && !empty($total_rows) && (count($total_rows) > 0)) {
+            foreach ($total_rows as $row_values) {
+                saudi_phone_normalize_post_fields(array('contact_' . $row_values));
+            }
+        }
         $this->resume_model->delete_referensh($student_id);
         if(isset($total_rows) && !empty($total_rows) && (count($total_rows)>0)){
             foreach ($total_rows as $row_key => $row_values) {                 

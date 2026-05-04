@@ -109,7 +109,7 @@ class Alumni extends Admin_Controller
 
     public function add()
     {
-        $this->form_validation->set_rules('current_phone', $this->lang->line('current_phone'), 'trim|required|xss_clean');
+        $this->form_validation->set_rules('current_phone', $this->lang->line('current_phone'), 'trim|required|xss_clean|saudi_phone');
 		
 		$storage_array = "documents"; // use comma for multiple files	 
 
@@ -130,6 +130,7 @@ class Alumni extends Admin_Controller
             $array = array('status' => 'fail', 'error' => $msg, 'message' => '');
         } else {
 			try {
+				saudi_phone_normalize_post_fields(array('current_phone'));
 				
 				$total_documents_failed_size = 0;
                 $storage_array = ['documents'];

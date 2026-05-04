@@ -188,6 +188,42 @@ class Onlinestudent extends Admin_Controller
             $this->form_validation->set_rules('rte', $this->lang->line('rtl'), 'trim|required|xss_clean');
         }
 
+        $student_login = json_decode($this->sch_setting_detail->student_login);
+        if ($this->sch_setting_detail->student_login != "null" && $this->sch_setting_detail->student_login != "") {
+            if (in_array('mobile_number', $student_login)) {
+                $this->form_validation->set_rules(
+                    'mobileno',
+                    $this->lang->line('mobile_no'),
+                    array('trim', 'xss_clean', 'saudi_phone', array('check_student_mobile_exists', array($this->student_model, 'check_student_mobile_no_exists')),)
+                );
+            } else {
+                $this->form_validation->set_rules('mobileno', $this->lang->line('mobile_no'), 'trim|xss_clean|saudi_phone');
+            }
+        } else {
+            $this->form_validation->set_rules('mobileno', $this->lang->line('mobile_no'), 'trim|xss_clean|saudi_phone');
+        }
+
+        if ($this->sch_setting_detail->parent_login != "null" && $this->sch_setting_detail->student_login != "") {
+
+            $parent_login = json_decode($this->sch_setting_detail->parent_login);
+            if (in_array('guardian_phone', $parent_login)) {
+                $this->form_validation->set_rules(
+                    'guardian_phone',
+                    $this->lang->line('guardian_phone'),
+                    array('trim', 'xss_clean', 'saudi_phone', array('check_parent_mobile_exists', array($this->student_model, 'check_parent_mobile_no_exists')),)
+                );
+            } else {
+                if ($this->sch_setting_detail->guardian_phone) {
+                    $this->form_validation->set_rules('guardian_phone', $this->lang->line('guardian_phone'), 'trim|required|xss_clean|saudi_phone');
+                } else {
+                    $this->form_validation->set_rules('guardian_phone', $this->lang->line('guardian_phone'), 'trim|xss_clean|saudi_phone');
+                }
+            }
+        }
+
+        $this->form_validation->set_rules('father_phone', $this->lang->line('father_phone'), 'trim|xss_clean|saudi_phone');
+        $this->form_validation->set_rules('mother_phone', $this->lang->line('mother_phone'), 'trim|xss_clean|saudi_phone');
+
         $custom_fields = $this->customfield_model->getByBelong('students');
         foreach ($custom_fields as $custom_fields_key => $custom_fields_value) {
             if ($custom_fields_value['validation'] && $this->customlib->getfieldstatus($custom_fields_value['name'])) {
@@ -204,6 +240,7 @@ class Onlinestudent extends Admin_Controller
         } else {
 
             try {
+                saudi_phone_normalize_post_fields(array('mobileno', 'father_phone', 'mother_phone', 'guardian_phone'));
                 $fee_session_group_id   = $this->input->post('fee_session_group_id');
                 $transport_feemaster_id = $this->input->post('transport_feemaster_id');
                 $discount_id            = $this->input->post('discount_id[]');

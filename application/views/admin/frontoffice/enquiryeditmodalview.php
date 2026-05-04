@@ -1,5 +1,6 @@
 
         <form  action="<?php echo site_url('admin/enquiry') ?>" id="myForm1"  method="post"  class="ptt10">
+            <input type="hidden" name="enquiry_row_id" value="<?php echo (int) $enquiry_data['id']; ?>">
             <div class="row">
                 <div class="col-sm-4">
                     <div class="form-group">
